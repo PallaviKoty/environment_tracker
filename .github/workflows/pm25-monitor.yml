@@ -1,0 +1,51 @@
+name: PM2.5 Hourly Monitor
+
+# Runs hourly. The cron schedule is in UTC; Singapore is UTC+8, so "5 * * * *"
+# fires at HH:05 SGT every hour (e.g. 00:05 UTC == 08:05 SGT).
+# A 5-minute offset gives NEA's API time to publish the top-of-hour reading.
+on:
+  schedule:
+    - cron: "5 * * * *"
+  workflow_dispatch: {}
+
+# Prevent overlapping runs (e.g. if a run is delayed and the next one starts).
+concurrency:
+  group: pm25-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write  # needed to commit the duplicate-prevention state file back
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run monitor (single cycle)
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_RECIPIENT_EMAIL: ${{ secrets.ALERT_RECIPIENT_EMAIL }}
+          ENABLE_LIVE_EMAIL: "true"
+          # Scheduled runs can be delayed by GitHub; keep the max age generous.
+          MAX_READING_AGE_MINUTES: "150"
+        run: python main.py --once
+
+      - name: Persist duplicate-prevention state
+        run: |
+          if [ -n "$(git status --porcelain state.json 2>/dev/null)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add state.json
+            git commit -m "Update PM2.5 monitor state [skip ci]"
+            git push
+          else
+            echo "No state change to commit."
+          fi
