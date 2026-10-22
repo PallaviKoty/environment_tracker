@@ -6,7 +6,12 @@ name: PM2.5 Hourly Monitor
 on:
   schedule:
     - cron: "5 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Simulate only (no real email, no state change)"
+        type: boolean
+        default: false
 
 # Prevent overlapping runs (e.g. if a run is delayed and the next one starts).
 concurrency:
@@ -33,12 +38,13 @@ jobs:
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           ALERT_RECIPIENT_EMAIL: ${{ secrets.ALERT_RECIPIENT_EMAIL }}
-          ENABLE_LIVE_EMAIL: "true"
+          ENABLE_LIVE_EMAIL: ${{ github.event.inputs.dry_run == 'true' && 'false' || 'true' }}
           # Scheduled runs can be delayed by GitHub; keep the max age generous.
           MAX_READING_AGE_MINUTES: "150"
-        run: python main.py --once
+        run: python main.py --once ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
       - name: Persist duplicate-prevention state
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
           if [ -n "$(git status --porcelain state.json 2>/dev/null)" ]; then
             git config user.name "github-actions[bot]"

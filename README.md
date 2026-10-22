@@ -124,7 +124,10 @@ built-in loop.
 5. `concurrency: group: pm25-monitor` prevents overlapping runs if a run is
    delayed into the next scheduled slot.
 6. You can also trigger a run manually via **Actions → PM2.5 Hourly Monitor →
-   Run workflow**.
+   Run workflow**. Tick the "Simulate only" input to perform a safe dry run
+   (no real email, no state file change) directly on GitHub's runners —
+   useful if your local machine can't reach the internet directly (e.g.
+   behind a restrictive corporate proxy).
 
 ### Persistent duplicate-prevention state
 
