@@ -167,6 +167,16 @@ class DryRunSafetyTests(unittest.TestCase):
                 main.send_email("subject", "body", dry_run=True)
                 smtp_mock.assert_not_called()
 
+    def test_multiple_comma_separated_recipients(self):
+        with mock.patch.dict(os.environ, {"ENABLE_LIVE_EMAIL": "true",
+                                           "GMAIL_ADDRESS": "a@gmail.com",
+                                           "GMAIL_APP_PASSWORD": "pw",
+                                           "ALERT_RECIPIENT_EMAIL": "b@example.com, c@example.com"}):
+            with mock.patch.object(main.smtplib, "SMTP") as smtp_mock:
+                main.send_email("subject", "body", dry_run=False)
+                sent_msg = smtp_mock.return_value.__enter__.return_value.send_message.call_args[0][0]
+                self.assertEqual(sent_msg["To"], "b@example.com, c@example.com")
+
 
 class RunOnceDuplicateTests(unittest.TestCase):
     def setUp(self):

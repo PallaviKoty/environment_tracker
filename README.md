@@ -113,14 +113,17 @@ built-in loop.
    - `GMAIL_ADDRESS`
    - `GMAIL_APP_PASSWORD`
    - `ALERT_RECIPIENT_EMAIL`
-3. The workflow `.github/workflows/pm25-monitor.yml` runs hourly via
+3. For multiple recipients, set `ALERT_RECIPIENT_EMAIL` to a comma-separated
+   list, e.g. `alice@example.com,bob@example.com` (works the same locally
+   via `.env`).
+4. The workflow `.github/workflows/pm25-monitor.yml` runs hourly via
    `cron: "5 * * * *"` (UTC). Since Singapore is UTC+8, this fires at `HH:05`
    SGT, 5 minutes after the top of the hour, giving NEA's API time to publish
    the reading. GitHub may delay scheduled runs further; `MAX_READING_AGE_MINUTES`
    (150) tolerates typical delays without sending stale data.
-4. `concurrency: group: pm25-monitor` prevents overlapping runs if a run is
+5. `concurrency: group: pm25-monitor` prevents overlapping runs if a run is
    delayed into the next scheduled slot.
-5. You can also trigger a run manually via **Actions → PM2.5 Hourly Monitor →
+6. You can also trigger a run manually via **Actions → PM2.5 Hourly Monitor →
    Run workflow**.
 
 ### Persistent duplicate-prevention state

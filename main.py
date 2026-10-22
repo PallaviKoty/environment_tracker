@@ -34,10 +34,10 @@ NOTIFICATION_INTERVAL_SECONDS = int(os.environ.get("NOTIFICATION_INTERVAL_SECOND
 
 # (low, high inclusive, band name, suggested action)
 BANDS = [
-    (0, 55, "Normal", "Consider ventilation when outdoor conditions are suitable."),
-    (56, 150, "Elevated", "Close doors/windows where practical and use a suitable air purifier if available."),
-    (151, 250, "High", "Reduce outdoor particle entry and exposure; follow NEA guidance."),
-    (251, float("inf"), "Very High", "Minimise outdoor particle entry and follow current NEA health advisories."),
+    (0, 55, "Normal", "🟢 Keep doors and windows open."),
+    (56, 150, "Elevated", "🟡 Close doors and windows as much as possible. Turn ON the air purifier."),
+    (151, 250, "High", "🟠 Keep doors and windows closed. Turn ON the air purifier."),
+    (251, float("inf"), "Very High", "🔴 Stay indoors. Keep doors and windows closed. Turn ON the air purifier."),
 ]
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -186,18 +186,22 @@ def live_sending_enabled(dry_run: bool) -> bool:
     return not dry_run and _env_truthy("ENABLE_LIVE_EMAIL")
 
 
-def get_gmail_credentials() -> tuple[str, str, str]:
+def get_gmail_credentials() -> tuple[str, str, list[str]]:
     address = os.environ.get("GMAIL_ADDRESS")
     app_password = os.environ.get("GMAIL_APP_PASSWORD")
-    recipient = os.environ.get("ALERT_RECIPIENT_EMAIL")
+    recipient_raw = os.environ.get("ALERT_RECIPIENT_EMAIL")
     missing = [n for n, v in (
         ("GMAIL_ADDRESS", address),
         ("GMAIL_APP_PASSWORD", app_password),
-        ("ALERT_RECIPIENT_EMAIL", recipient),
+        ("ALERT_RECIPIENT_EMAIL", recipient_raw),
     ) if not v]
     if missing:
         raise RuntimeError(f"Missing required environment variable(s): {', '.join(missing)}")
-    return address, app_password, recipient
+    # ALERT_RECIPIENT_EMAIL may be a single address or a comma-separated list.
+    recipients = [r.strip() for r in recipient_raw.split(",") if r.strip()]
+    if not recipients:
+        raise RuntimeError("ALERT_RECIPIENT_EMAIL is set but contains no valid email address(es)")
+    return address, app_password, recipients
 
 
 def send_email(subject: str, body: str, dry_run: bool) -> None:
@@ -206,18 +210,18 @@ def send_email(subject: str, body: str, dry_run: bool) -> None:
         logger.info("[DRY RUN] Would send email.\nSubject: %s\n%s", subject, body)
         return
 
-    address, app_password, recipient = get_gmail_credentials()
+    address, app_password, recipients = get_gmail_credentials()
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = address
-    msg["To"] = recipient
+    msg["To"] = ", ".join(recipients)
     msg.set_content(body)
 
     with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as smtp:
         smtp.starttls()
         smtp.login(address, app_password)
         smtp.send_message(msg)
-    logger.info("Alert email sent to %s", recipient)
+    logger.info("Alert email sent to %s", ", ".join(recipients))
 
 
 def run_once(dry_run: bool) -> int:
