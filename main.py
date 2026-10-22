@@ -146,7 +146,7 @@ def build_body(value: float, band: str, action: str, observation_time: datetime,
         lines.append(f"** AIR QUALITY BAND CHANGED: {previous_band} -> {band} **")
         lines.append("")
     lines += [
-        f"1-hour PM2.5 reading: {value:.0f} ug/m3 - {band} at {observation_time.strftime('%Y-%m-%d %H:%M:%S')}",
+        f"Current PM2.5: ({value:.0f}) - {band} at {observation_time.strftime('%H:%M')}",
         f"Suggested action: {action}",
     ]
     return "\n".join(lines)
