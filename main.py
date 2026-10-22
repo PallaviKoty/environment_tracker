@@ -146,17 +146,9 @@ def build_body(value: float, band: str, action: str, observation_time: datetime,
         lines.append(f"** AIR QUALITY BAND CHANGED: {previous_band} -> {band} **")
         lines.append("")
     lines += [
-        f"Region: {REGION_LABEL}",
-        f"1-hour PM2.5 reading: {value:.0f} ug/m3",
-        f"Classification: {band}",
-        f"Observation time (Asia/Singapore): {observation_time.strftime('%Y-%m-%d %H:%M:%S %z')}",
-        "",
+        f"1-hour PM2.5 reading: {value:.0f} ug/m3 - {band} at {observation_time.strftime('%Y-%m-%d %H:%M:%S %z')}",
+        f"",
         f"Suggested action: {action}",
-        "",
-        "Note: this reading is an outdoor measurement and does not guarantee indoor air quality.",
-        "Indoor levels depend on ventilation, filtration, and building conditions.",
-        "",
-        f"More information: {HAZE_URL}",
     ]
     return "\n".join(lines)
 

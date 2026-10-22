@@ -120,9 +120,7 @@ class MessageGenerationTests(unittest.TestCase):
         self.assertIn("57", body)
         self.assertIn("Elevated", body)
         self.assertIn("2026-10-21", body)
-        self.assertIn("haze.gov.sg", body)
         self.assertIn("Close doors/windows.", body)
-        self.assertIn("does not guarantee indoor air quality", body)
 
     def test_band_change_notice(self):
         obs = datetime(2026, 10, 21, 17, 0, tzinfo=main.SG_TZ)
