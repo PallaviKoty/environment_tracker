@@ -146,7 +146,7 @@ def build_body(value: float, band: str, action: str, observation_time: datetime,
         lines.append(f"** AIR QUALITY BAND CHANGED: {previous_band} -> {band} **")
         lines.append("")
     lines += [
-        f"1-hour PM2.5 reading: {value:.0f} ug/m3 - {band} at {observation_time.strftime('%Y-%m-%d %H:%M:%S %z')}",
+        f"1-hour PM2.5 reading: {value:.0f} ug/m3 - {band} at {observation_time.strftime('%Y-%m-%d %H:%M:%S')}",
         f"",
         f"Suggested action: {action}",
     ]
@@ -207,7 +207,9 @@ def send_email(subject: str, body: str, dry_run: bool) -> None:
     msg["Subject"] = subject
     msg["From"] = address
     msg["To"] = ", ".join(recipients)
-    msg.set_content(body)
+    # Force quoted-printable so non-ASCII characters (e.g. emoji) survive
+    # relays that don't fully support 8BITMIME.
+    msg.set_content(body, cte="quoted-printable")
 
     with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as smtp:
         smtp.starttls()
