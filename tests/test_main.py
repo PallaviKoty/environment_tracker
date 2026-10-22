@@ -119,7 +119,7 @@ class MessageGenerationTests(unittest.TestCase):
         body = main.build_body(57, "Elevated", "Close doors/windows.", obs)
         self.assertIn("57", body)
         self.assertIn("Elevated", body)
-        self.assertIn("2026-10-21", body)
+        self.assertIn("17:00", body)
         self.assertIn("Close doors/windows.", body)
 
     def test_band_change_notice(self):
@@ -200,6 +200,24 @@ class RunOnceDuplicateTests(unittest.TestCase):
             result = main.run_once(dry_run=True)
         self.assertEqual(result, 0)
         send_mock.assert_not_called()
+
+    def test_normal_band_does_not_send(self):
+        reading = main.Reading(value=38.0, observation_time=datetime(2026, 10, 21, 17, 0, tzinfo=main.SG_TZ))
+        with mock.patch.object(main, "fetch_reading", return_value=reading), \
+             mock.patch.object(main, "is_stale", return_value=False), \
+             mock.patch.object(main, "send_email") as send_mock:
+            result = main.run_once(dry_run=True)
+        self.assertEqual(result, 0)
+        send_mock.assert_not_called()
+
+    def test_elevated_band_sends(self):
+        reading = main.Reading(value=57.0, observation_time=datetime(2026, 10, 21, 17, 0, tzinfo=main.SG_TZ))
+        with mock.patch.object(main, "fetch_reading", return_value=reading), \
+             mock.patch.object(main, "is_stale", return_value=False), \
+             mock.patch.object(main, "send_email") as send_mock:
+            result = main.run_once(dry_run=True)
+        self.assertEqual(result, 0)
+        send_mock.assert_called_once()
 
 
 if __name__ == "__main__":

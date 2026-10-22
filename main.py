@@ -238,6 +238,10 @@ def run_once(dry_run: bool) -> int:
         logger.error("Invalid reading, cannot classify: %s", exc)
         return 1
 
+    if band == "Normal":
+        logger.info("Band is Normal (%s ug/m3); no alert needed.", reading.value)
+        return 0
+
     state = load_state()
     last_obs = state.get("last_sent_observation")
     if last_obs == reading.observation_time.isoformat():

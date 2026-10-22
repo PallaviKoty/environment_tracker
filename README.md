@@ -24,8 +24,10 @@ Standard-library only (no third-party dependencies).
 - Uses the **observation timestamp** (not the computer clock) to judge
   freshness. Readings older than `MAX_READING_AGE_MINUTES` (default 150) are
   rejected as stale and no email is sent.
-- Sends one email per hourly run. If the classification band changed since
-  the last sent email, the email includes a prominent "BAND CHANGED" notice.
+- Sends an email every hourly run **only when the band is Elevated or
+  higher** (Normal readings are silent, no email). If the classification band
+  changed since the last sent email, the email includes a prominent
+  "BAND CHANGED" notice.
 - A small `state.json` file records the last-notified observation timestamp
   and band, preventing duplicate emails for the same observation (e.g. on
   retries).
